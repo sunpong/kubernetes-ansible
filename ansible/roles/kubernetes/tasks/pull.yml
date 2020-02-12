@@ -18,35 +18,14 @@
   run_once: True
 
 - set_fact:
-    images_list: "{{ kube_images.result.images_list }}"
+    images_map: "{{ kube_images.result.images_map }}"
   changed_when: false
 
-# The different CRI may pull images in one tasks
-- name: Pull kube images for docker nodes
+- name: Pull kube images for docker or containerd nodes
   kube_runtime:
-    image: "{{ item.image_repo }}:{{ item.image_tag }}"
+    image: "{{ item.value }}"
     runtime_action: pull
-    runtime_type: docker
-  loop: "{{ images_list }}"
-  loop_control:
-    label:
-      - "{{ item.image_repo }}"
-      - "{{ item.image_tag }}"
+    runtime_type: "{{ '' | get_runtime_type(kube_group=item.key) }}"
+  with_dict: "{{ images_map }}"
   when:
-    - inventory_hostname in groups[item.group]
-    - inventory_hostname in groups['docker-node']
-
-# The container pull images action may merged into docker
-- name: Pull kube images for containerd nodes
-  kube_runtime:
-    image: "{{ item.image_repo }}:{{ item.image_tag }}"
-    runtime_action: pull
-    runtime_type: containerd
-  loop: "{{ images_list }}"
-  loop_control:
-    label:
-      - "{{ item.image_repo }}"
-      - "{{ item.image_tag }}"
-  when:
-    - inventory_hostname in groups[item.group]
-    - inventory_hostname in groups['containerd-node']
+    - inventory_hostname in groups[item.key]

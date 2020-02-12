@@ -71,19 +71,23 @@ class RuntimeBase(object):
 
     def get_image(self):
         kube_images = self.get_kube_images()
-        images_list = []
+        images_map = {
+            'docker-master': [],
+            'containerd-master': [],
+            'docker-node': [],
+            'containerd-node': []
+        }
         for image in kube_images.split():
-            image_repo, image_tag = image.split(':')
+            image_repo = image.split(':')[0]
             image_name = image_repo.split('/')[-1]
             if image_name in master_images:
-                images_list.append({'image_repo': image_repo,
-                                    'image_tag': image_tag,
-                                    'group': 'kube-master'})
+                images_map['docker-master'].append(image)
+                images_map['containerd-master'].append(image)
             if image_name in node_images:
-                images_list.append({'image_repo': image_repo,
-                                    'image_tag': image_tag,
-                                    'group': 'kube-node'})
-        self.result['images_list'] = images_list
+                images_map['docker-node'].append(image)
+                images_map['containerd-node'].append(image)
+
+        self.result['images_map'] = images_map
 
     @abc.abstractmethod
     def pull_image(self):
@@ -101,11 +105,12 @@ class DockerRuntime(RuntimeBase):
 
     def pull_image(self):
         # NOTE(caoyingjun): Pull the image from aliyun or private repo.
-        # image's format is REPOSITORY:TAG
+        # image's format is list: [REPOSITORY:TAG]
         local_images = self.get_local_images()
-        if self.image not in local_images:
-            self.run_cmd('docker pull {image}'.format(image=self.image))
-            self.changed = True
+        for image in self.image:
+            if image not in local_images:
+                self.run_cmd('docker pull {image}'.format(image=image))
+                self.changed = True
 
     def get_local_images(self):
         images = self.run_cmd('docker images')
@@ -120,10 +125,13 @@ class ContainerdRuntime(RuntimeBase):
         super(ContainerdRuntime, self).__init__(params)
 
     def pull_image(self):
+        # NOTE(caoyingjun): Pull the image from aliyun or private repo.
+        # image's format is list: [REPOSITORY:TAG]
         local_images = self.get_local_images()
-        if self.image not in local_images:
-            self.run_cmd('ctr -n k8s.io images pull {image}'.format(image=self.image))
-            self.changed = True
+        for image in self.image:
+            if image not in local_images:
+                self.run_cmd('ctr -n k8s.io images pull {image}'.format(image=image))
+                self.changed = True
 
     def get_local_images(self):
         images = self.run_cmd('ctr -n k8s.io images list')
@@ -134,7 +142,7 @@ class ContainerdRuntime(RuntimeBase):
 def main():
 
     specs = dict(
-        image=dict(type='str', default=''),
+        image=dict(type='list', default=[]),
         image_repository=dict(type='str', required=True),
         kubernetes_version=dict(type='str', required=True),
         runtime_action=dict(type='str', default='pull'),
