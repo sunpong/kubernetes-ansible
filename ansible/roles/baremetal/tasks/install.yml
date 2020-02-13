@@ -1,15 +1,6 @@
 ---
 - name: Hanlder the kubernetes stuffs
   block:
-    # Install docker py packages to pull images
-    - name: Install docker packages
-      become: true
-      pip:
-        name: docker
-        state: present
-        extra_args: --ignore-installed
-      changed_when: false
-
     - name: Ensure /etc/docker directories exists
       file:
         name: /etc/docker
@@ -34,8 +25,8 @@
 
     # Somethings service module invoke enable command failed,
     # but I do not know the reason, use shell module to avoid.
-    # The failed message is
-    # Could not find the requested service kubelet: host
+    # The failed message is like:
+    # "Could not find the requested service kubelet: host"
     - name: Enable kubelet service
       shell: systemctl enable kubelet
       changed_when: false

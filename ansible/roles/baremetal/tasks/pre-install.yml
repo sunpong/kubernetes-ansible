@@ -31,22 +31,6 @@
   when:
     - inventory_hostname in groups['kubernetes']
 
-- name: Ensure pip folder exists
-  become: true
-  file:
-    path: /root/.pip/
-    state: directory
-  when:
-    - inventory_hostname in groups['baremetal']
-
-- name: Copy pip.conf to /root/.pip/
-  become: true
-  template:
-    src: pip.conf.j2
-    dest: /root/.pip/pip.conf
-  when:
-    - inventory_hostname in groups['baremetal']
-
 - name: Change state of selinux
   selinux:
     policy: targeted
@@ -56,13 +40,14 @@
     - change_selinux | bool
     - inventory_hostname in groups['baremetal']
 
-# Try to stop and disable firewalld service,
-# let it go when firewalld not exists.
+# Try to stop and disable delegated service,
+# let it go when not exists.
 - name: Disable firewalld service
   service:
-    name: firewalld
+    name: "{{ item }}"
     state: stopped
     enabled: False
   failed_when: false
+  loop: "{{ services_to_disabled }}"
   when:
     - inventory_hostname in groups['baremetal']

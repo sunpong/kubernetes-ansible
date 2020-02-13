@@ -4,12 +4,13 @@
 ####################
 common_dependent_packages:
   - gcc
-  - python-setuptools
-  - python-devel
-  - python-pip
   - python-devel
   - libffi-devel
   - openssl-devel
 
 change_selinux: True
 selinux_state: "disabled"
+
+services_to_disabled:
+  - firewalld
+  - NetworkManager
