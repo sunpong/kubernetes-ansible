@@ -19,14 +19,23 @@ author: Caoyingjun
 
 '''
 
+import functools
 import os
 import subprocess
+import yaml
 
 import traceback
 
-
 KUBEADMIN = '/etc/kubernetes/admin.conf'
 TAINT_EXCEPTION = 'taint "node-role.kubernetes.io/master" not found'
+
+
+def add_kubeconfig_in_environ(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        os.environ['KUBECONFIG'] = KUBEADMIN
+        return func(*args, **kwargs)
+    return wrapper
 
 
 class KubeWorker(object):
@@ -39,6 +48,22 @@ class KubeWorker(object):
         self.changed = False
         # Use this to store arguments to pass to exit_json()
         self.result = {}
+
+    def _run(self, cmd):
+        proc = subprocess.Popen(cmd,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE,
+                                shell=True)
+        stdout, stderr = proc.communicate()
+        retcode = proc.poll()
+        if retcode != 0:
+            # NOTE(caoyingjun): handler kubectl taint comand especially,
+            # since it not idempotent.
+            if retcode == 1 and TAINT_EXCEPTION in stderr:
+                return stdout
+            output = 'stdout: "%s", stderr: "%s"' % (stdout, stderr)
+            raise subprocess.CalledProcessError(retcode, cmd, output)
+        return stdout
 
     @property
     def _is_kube_cluster_exists(self):
@@ -106,21 +131,70 @@ class KubeWorker(object):
 
         return ' '.join(cmd)
 
-    def _run(self, cmd):
-        proc = subprocess.Popen(cmd,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE,
-                                shell=True)
-        stdout, stderr = proc.communicate()
-        retcode = proc.poll()
-        if retcode != 0:
-            # NOTE(caoyingjun): handler kubectl taint comand especially,
-            # since it not idempotent.
-            if retcode == 1 and TAINT_EXCEPTION in stderr:
-                return stdout
-            output = 'stdout: "%s", stderr: "%s"' % (stdout, stderr)
-            raise subprocess.CalledProcessError(retcode, cmd, output)
-        return stdout
+    @add_kubeconfig_in_environ
+    def get_token(self):
+        cmd = 'kubeadm token list | grep system:bootstrappers'
+        tokens = self._run(cmd)
+        tokens = tokens.split('\n')
+
+        for tk in tokens:
+            if not tk:
+                continue
+            tk = tk.split()
+            if int(tk[1][:-1]) > 0:
+                token = tk[0]
+                break
+        else:
+            # if all the token are inactive, recreate it.
+            recmd = 'kubeadm token create'
+            new_token = self._run(recmd)
+            token = new_token[:-1]
+            self.changed = True
+
+        self.result['token'] = token
+
+    # Get he apiserver from KUBECONFIG
+    def get_kube_apiserver(self):
+        with open(KUBEADMIN, 'r') as f:
+            kubeconfig = yaml.load(f)
+
+        kube_apiserver = kubeconfig['clusters'][0]['cluster']['server']
+
+        self.result['apiserver'] = kube_apiserver.split('//')[-1]
+
+    def get_token_ca_cert_hash(self):
+        cmd = ("openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | "
+               "openssl rsa -pubin -outform der 2>/dev/null | "
+               "openssl dgst -sha256 -hex | sed 's/^.* //'")
+        token_ca_cert_hash = self._run(cmd)
+
+        self.result['token_ca_cert_hash'] = token_ca_cert_hash[:-1]
+
+    @add_kubeconfig_in_environ
+    def get_certificate_key(self):
+        if self.is_ha and self.result['masters_added']:
+            cmd = 'kubeadm init phase upload-certs --upload-certs'
+            certificate_key = self._run(cmd)
+            certificate_key = certificate_key.split()[-1]
+            self.result['certificate_key'] = certificate_key
+        else:
+            self.result['certificate_key'] = None
+
+    @property
+    @add_kubeconfig_in_environ
+    def kube_nodes(self):
+        cmd = "kubectl get node | awk '{print $1}'"
+        node_names = self._run(cmd).strip()
+        node_names = node_names.split('\n')
+        return node_names[1:]
+
+    def get_update_nodes(self):
+        kube_masters = self.params.get('kube_masters')
+        kube_workers = self.params.get('kube_workers')
+        masters_sets = set(kube_masters) - set(self.kube_nodes)
+        workers_sets = set(kube_workers) - set(self.kube_nodes)
+        self.result['masters_added'] = list(masters_sets)
+        self.result['workers_added'] = list(workers_sets - masters_sets)
 
     def run(self):
         if self.is_bootstrap:
@@ -140,11 +214,21 @@ class KubeWorker(object):
                 self.changed = True
             self.result['kube_result'] = kube_result
 
+    def get(self):
+        self.get_kube_apiserver()
+        self.get_update_nodes()
+        self.get_token()
+        self.get_token_ca_cert_hash()
+        self.get_certificate_key()
+
 
 def main():
     specs = dict(
-        module_name=dict(type='str', required=True),
-        module_args=dict(type='str', required=True),
+        module_name=dict(type='str'),
+        module_args=dict(type='str'),
+        kube_masters=dict(type='list'),
+        kube_workers=dict(type='list'),
+        kube_action=dict(type='str', default='run'),
         module_extra_vars=dict(type='json'),
         is_ha=dict(type='bool', default=False)
     )
@@ -154,7 +238,7 @@ def main():
     bw = None
     try:
         bw = KubeWorker(params)
-        bw.run()
+        getattr(bw, params.get('kube_action'))()
         module.exit_json(changed=bw.changed, result=bw.result)
     except Exception:
         module.fail_json(changed=True, msg=repr(traceback.format_exc()),

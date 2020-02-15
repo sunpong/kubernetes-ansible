@@ -53,14 +53,10 @@
 # get token-ca-cert-hash,
 # get the kube workers which need to added.
 - name: Get kubernetes cluster token and certs
-  kube_get:
+  kube_toolbox:
     kube_masters: "{{ groups['kube-master'] }}"
     kube_workers: "{{ groups['kube-worker'] }}"
-    get_list:
-      - kube_apiserver
-      - token
-      - token_ca_cert_hash
-      - certificate_key
+    kube_action: "get"
     is_ha: "{{ enable_kubernetes_ha | bool }}"
   register: cluster_result
   delegate_to: "{{ groups['kube-master'][0] }}"
