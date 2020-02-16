@@ -2,6 +2,7 @@
 # docker pull subcommand is idempotent
 - name: Pull kube nginx images for loadbalance
   shell: docker pull {{ loadbalancer_image }}
+  changed_when: false
   when:
     - inventory_hostname in groups['kubernetes']
     - enable_kubernetes_ha | bool
