@@ -6,19 +6,19 @@
     enable_<appication_name>: "yes"
     ```
 
-已支持的application name列表：
-- flannel
-- calico
-- ovn
-- metrics\_server
-- nfs\_provisioner
-- rbd\_provisioner [ceph](ceph-guide.md)
-- dashboard
-- prometheus
-- efk
-- jenkins
-- ingress\_nginx
-- helm [helm3](helm3-guide.md)
+    已支持的application name：
+    - flannel
+    - calico
+    - ovn
+    - metrics\_server
+    - nfs\_provisioner
+    - rbd\_provisioner [ceph](ceph-guide.md)
+    - dashboard
+    - prometheus
+    - efk
+    - jenkins
+    - ingress\_nginx
+    - helm [helm3](helm3-guide.md)
 
 2. 执行如下命令完成指定 `applications` 的安装.
 

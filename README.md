@@ -8,13 +8,13 @@ Kubernetes-ansible's mission statement is:
 
 2. 生产环境部署 [Multinode](doc/source/install/multinode.md)
 
-3. 生成认证文件 [RC](doc/source/install/admin-k8src.md)
+3. 生成认证文件 [RC-guide](doc/source/install/admin-k8src.md)
 
-4. 计算节点扩容 [Expansion](doc/source/install/expansion.md)
+4. 计算节点扩容 [Expansion-guide](doc/source/install/expansion.md)
 
-5. kubernetes Applications [Install](doc/source/apply/install-guide.md)
+5. kubernetes Applications [Install-guide](doc/source/apply/install-guide.md)
 
-    已经支持applications：
+    支持applications(For now)：
     - `Helm3`
     - `Ceph provisioner`
     - `Nfs provisioner`
@@ -25,7 +25,7 @@ Kubernetes-ansible's mission statement is:
     - `Prometheus`
     - `Jenkins`
 
-6. 清理集群 [Destory](doc/source/install/destroy.md)
+6. 清理集群 [Destory-guide](doc/source/install/destroy.md)
 
 7. Contact me `caoyingjun(284224086@qq.com)`
 
