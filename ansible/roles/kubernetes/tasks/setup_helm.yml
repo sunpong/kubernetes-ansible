@@ -1,6 +1,7 @@
 ---
 - name: Pull helm3 toolbox images
   shell: docker pull {{ helm_image }}
+  changed_when: false
   when:
     - inventory_hostname in groups['kube-master']
     - enable_helm | bool
