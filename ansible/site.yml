@@ -15,8 +15,6 @@
 - name: Apply role kubernetes
   gather_facts: false
   hosts:
-    - kube-master
-    - kube-node
     - kubernetes
   serial: '{{ kube_serial|default("0") }}'
   roles:

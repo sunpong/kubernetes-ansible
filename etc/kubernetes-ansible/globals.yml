@@ -2,7 +2,6 @@
 #####################
 # kubernetes options
 #####################
-enable_kubernetes: "yes"
 #enable_kubernetes_ha: "no"
 
 kube_release: 1.16.2

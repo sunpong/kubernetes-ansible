@@ -2,11 +2,7 @@
 ####################
 # Common dependence
 ####################
-common_dependent_packages:
-  - gcc
-  - python-devel
-  - libffi-devel
-  - openssl-devel
+common_dependent_packages: []
 
 change_selinux: True
 selinux_state: "disabled"

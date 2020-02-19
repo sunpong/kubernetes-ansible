@@ -43,12 +43,13 @@ kube_release: 1.16.2
 kubernetes_version: "v{{ kube_release }}"
 
 docker_release: 18.06.2
+containerd_release: 1.2.13
 
 helm_release: v3.0.3
 
 node_config_directory: "/etc/kubernetes-ansible/"
 
-kube_repo: "{{ registry_repo if enable_registry | bool else aliyun_repo }}"
+kube_repo: "{{ registry_repo if enable_registry | bool else image_repository }}"
 
 kube_applications:
   - name: kube-flannel
@@ -102,7 +103,7 @@ calico_cni_image: "{{ calico_url }}calico/cni:{{ calico_tag }}"
 calico_pod2daemon_flexvol_image: "{{ calico_url }}calico/pod2daemon-flexvol:{{ calico_tag }}"
 calico_kube_controllers_image: "{{ calico_url }}calico/kube-controllers:{{ calico_tag }}"
 
-dashboard_url: "{{ registry_server + '/kubernetes' if enable_registry | bool else aliyun_repo }}"
+dashboard_url: "{{ registry_server + '/kubernetes' if enable_registry | bool else image_repository }}"
 dashboard_image: "{{ dashboard_url }}/kubernetes-dashboard-amd64:v1.10.1"
 
 nfs_provisioner_url: "{{ registry_server if enable_registry | bool else 'quay.io' }}"

@@ -87,7 +87,7 @@ class KubeWorker(object):
         return False
 
     @property
-    def is_worker_add(self):
+    def is_node_add(self):
         if (self.module_name == 'kubeadm'
            and self.module_args.startswith('join')):
             return True
@@ -114,8 +114,8 @@ class KubeWorker(object):
             if isinstance(module_extra_vars, dict):
                 if self.is_bootstrap:
                     module_extra_vars = ' '.join('--{}={}'.format(key, value)  # noqa
-                                        for key, value in module_extra_vars.items())  # noqa
-                if self.is_worker_add:
+                                        for key, value in module_extra_vars.items() if value)  # noqa
+                if self.is_node_add:
                     extra_cmd = ''
                     for key, value in module_extra_vars.items():
                         if key == 'discovery-token-ca-cert-hash':
@@ -183,18 +183,35 @@ class KubeWorker(object):
     @property
     @add_kubeconfig_in_environ
     def kube_nodes(self):
-        cmd = "kubectl get node | awk '{print $1}'"
-        node_names = self._run(cmd).strip()
-        node_names = node_names.split('\n')
-        return node_names[1:]
+        cmd = 'kubectl get node -o wide'
+        # To strip the lastest '\n'
+        nodes = self._run(cmd).strip()
+        return nodes.split('\n')[1:]
+
+    @property
+    def nodes_by_runtime(self):
+        node_map = {
+            'docker': [],
+            'containerd': []
+        }
+        for node in self.kube_nodes:
+            node_item = node.split()
+            if node_item[-1].startswith('docker://'):
+                node_map['docker'].append(node_item[0])
+            if node_item[-1].startswith('containerd://'):
+                node_map['containerd'].append(node_item[0])
+        return node_map
 
     def get_update_nodes(self):
-        kube_masters = self.params.get('kube_masters')
-        kube_workers = self.params.get('kube_workers')
-        masters_sets = set(kube_masters) - set(self.kube_nodes)
-        workers_sets = set(kube_workers) - set(self.kube_nodes)
-        self.result['masters_added'] = list(masters_sets)
-        self.result['workers_added'] = list(workers_sets - masters_sets)
+        # Get the nodes which need to add by runtime
+        kube_groups = self.params.get('kube_groups')
+
+        self.result['update_nodes'] = {
+            'docker-master': list(set(kube_groups['docker_master']) - set(self.nodes_by_runtime['docker'])),
+            'containerd-master': list(set(kube_groups['containerd_master']) - set(self.nodes_by_runtime['containerd'])),
+            'docker-node': list(set(kube_groups['docker_node']) - set(self.nodes_by_runtime['docker'])),
+            'containerd-node': list(set(kube_groups['containerd_node']) - set(self.nodes_by_runtime['containerd']))
+        }
 
     def run(self):
         if self.is_bootstrap:
@@ -226,8 +243,7 @@ def main():
     specs = dict(
         module_name=dict(type='str'),
         module_args=dict(type='str'),
-        kube_masters=dict(type='list'),
-        kube_workers=dict(type='list'),
+        kube_groups=dict(type='json'),
         kube_action=dict(type='str', default='run'),
         module_extra_vars=dict(type='json'),
         is_ha=dict(type='bool', default=False)

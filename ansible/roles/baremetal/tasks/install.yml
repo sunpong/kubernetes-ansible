@@ -1,12 +1,7 @@
 ---
 - name: Hanlder the kubernetes stuffs
   block:
-    - name: Ensure /etc/docker directories exists
-      file:
-        name: /etc/docker
-        state: directory
-
-    - name: Copy docker repo for kubernetes nodes
+    - name: Copy container runtime repos for kubernetes nodes
       template:
         src: "{{ item.src }}"
         dest: "{{ item.dest }}"
@@ -14,10 +9,9 @@
         - {"src": docker-ce.repo.j2, "dest": /etc/yum.repos.d/docker-ce.repo}
         - {"src": kubernetes.repo.j2, "dest": /etc/yum.repos.d/kubernetes.repo}
 
-    - name: Install docker and kubernetes packages
+    - name: Install kubernetes and its indepent packages
       yum:
         name:
-          - "docker-ce-{{ docker_release }}.ce"
           - "kubelet-{{ kube_release }}"
           - "kubeadm-{{ kube_release }}"
           - "kubectl-{{ kube_release }}"
@@ -33,23 +27,58 @@
   when:
     - inventory_hostname in groups['kubernetes']
 
+- name: Install docker and containerd runtimes
+  yum:
+    name: "{{ item.runtime }}"
+    state: present
+  when:
+    - inventory_hostname in groups[item.groups]
+  loop:
+    - {'runtime': "docker-ce-{{ docker_release }}.ce", 'groups': "docker-node"}
+    - {'runtime': "containerd.io-{{ containerd_release }}", 'groups': "containerd-node"}
+
+- name: Ensure /etc/docker directories exists
+  file:
+    name: /etc/docker
+    state: directory
+  when:
+    - inventory_hostname in groups['docker-node']
+
 - name: Copy docker daemon jsons
   template:
     src: kube-daemon.json.j2
     dest: /etc/docker/daemon.json
   when:
-    - inventory_hostname in groups['kubernetes']
+    - inventory_hostname in groups['docker-node']
   notify:
     - Restart docker service
+
+- name: Copy containerd config.toml
+  template:
+    src: config.toml.j2
+    dest: /etc/containerd/config.toml
+  when:
+    - inventory_hostname in groups['containerd-node']
+  notify:
+    - Restart containerd service
 
 - name: Check docker service status
   service_check:
     service_name: docker
     service_type: systemd
   when:
-    - inventory_hostname in groups['kubernetes']
+    - inventory_hostname in groups['docker-node']
   notify:
     - Restart docker service
+
+- name: Check containerd service status
+  service_check:
+    service_name: containerd
+    service_type: systemd
+  when:
+    - inventory_hostname in groups['containerd-node']
+  notify:
+    - Restart containerd service
 
 - name: Flush handlers
   meta: flush_handlers

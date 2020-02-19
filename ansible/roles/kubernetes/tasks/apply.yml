@@ -15,3 +15,12 @@
   loop: "{{ kube_applications }}"
 
 - include_tasks: setup_helm.yml
+
+- name: Taint OVN DB and the OVN Control Plane label
+  kube_toolbox:
+    module_name: kubectl
+    module_args: "taint node {{ groups['kube-master'][0] }} kube-ovn/role=master"
+  delegate_to: "{{ groups['kube-master'][0] }}"
+  run_once: True
+  changed_when: false
+  when: enable_ovn | bool

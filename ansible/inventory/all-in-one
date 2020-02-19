@@ -1,22 +1,28 @@
-[control]
+[docker-master]
 localhost       ansible_connection=local
 
-[compute]
+[containerd-master]
+
+[docker-node]
 localhost       ansible_connection=local
+
+[containerd-node]
+
+[kube-master:children]
+docker-master
+containerd-master
+
+[kube-node:children]
+docker-node
+containerd-node
 
 [storage]
 localhost       ansible_connection=local
 
 [baremetal:children]
-control
-compute
+kube-master
+kube-node
 storage
-
-[kube-master:children]
-control
-
-[kube-node:children]
-compute
 
 [kubernetes:children]
 kube-master

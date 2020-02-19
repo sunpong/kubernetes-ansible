@@ -1,22 +1,27 @@
-[control]
-control01
+[docker-master]
+kube01
 
-[compute]
-compute01
+[containerd-master]
 
-[storage]
-compute01
+[docker-node]
+kube02
 
-[baremetal:children]
-control
-compute
-storage
+[containerd-node]
 
 [kube-master:children]
-control
+docker-master
+containerd-master
 
 [kube-node:children]
-compute
+docker-node
+containerd-node
+
+[storage]
+
+[baremetal:children]
+kube-master
+kube-node
+storage
 
 [kubernetes:children]
 kube-master

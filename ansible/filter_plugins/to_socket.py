@@ -18,12 +18,13 @@ DOCUMENTATION = '''
 author: Caoyingjun
 '''
 
+from kubernetes_ansible.to_socket import to_socket
 
-def to_content(content, *args, **kwargs):
-    indent = '    '
-    content_list = []
-    for cnt in content.split('\n'):
-        cnt = indent + cnt
-        content_list.append(cnt)
 
-    return '\n'.join(content_list)
+class FilterModule(object):
+    '''Kubernetes-ansible custom jinja2 filters '''
+
+    def filters(self):
+        return {
+            'to_socket': to_socket
+        }

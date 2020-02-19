@@ -1,19 +1,28 @@
 ---
+# Get the kube-master[0] runtime_type
+- name: Fetch the runtime_type for kube-master
+  set_fact:
+    master_runtime_type: "{{ 'docker' if groups['kube-master'][0] in groups['docker-node'] else 'containerd' }}"
+  connection: local
+  changed_when: false
+  run_once: True
+
 - name: Get kube images list by kubeadm config
   kube_runtime:
     image_repository: "{{ image_repository }}"
     kubernetes_version: "{{ kubernetes_version }}"
-    runtime_type: docker
+    runtime_type: "{{ master_runtime_type }}"
     runtime_action: get
   register: kube_images
+  delegate_to: "{{ groups['kube-master'][0] }}"
   run_once: True
-  when: inventory_hostname in groups['kube-master']
 
 - set_fact:
     images_list: "{{ kube_images.result.images_list }}"
   changed_when: false
 
-- name: Pull kube images for kubernetes nodes
+# The different CRI may pull images in one tasks
+- name: Pull kube images for docker nodes
   kube_runtime:
     image: "{{ item.image_repo }}:{{ item.image_tag }}"
     runtime_action: pull
@@ -25,13 +34,19 @@
       - "{{ item.image_tag }}"
   when:
     - inventory_hostname in groups[item.group]
+    - inventory_hostname in groups['docker-node']
 
-- name: Pull metrics server images
+# The container pull images action may merged into docker
+- name: Pull kube images for containerd nodes
   kube_runtime:
-    image: "{{ item }}"
+    image: "{{ item.image_repo }}:{{ item.image_tag }}"
     runtime_action: pull
-    runtime_type: docker
-  loop: "{{ metrics_server_images }}"
+    runtime_type: containerd
+  loop: "{{ images_list }}"
+  loop_control:
+    label:
+      - "{{ item.image_repo }}"
+      - "{{ item.image_tag }}"
   when:
-    - inventory_hostname in groups['kubernetes']
-    - enable_metrics_server | bool
+    - inventory_hostname in groups[item.group]
+    - inventory_hostname in groups['containerd-node']

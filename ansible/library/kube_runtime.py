@@ -35,36 +35,8 @@ master_images = ['kube-apiserver',
 node_images = ['coredns', 'kube-proxy', 'pause']
 
 
-def run_cmd(cmd):
-    proc = subprocess.Popen(cmd,
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE,
-                            shell=True)
-    stdout, stderr = proc.communicate()
-    retcode = proc.poll()
-    if retcode != 0:
-        output = 'stdout: "%s", stderr: "%s"' % (stdout, stderr)
-        raise subprocess.CalledProcessError(retcode, cmd, output)
-    return stdout.rstrip()
-
-
 @six.add_metaclass(abc.ABCMeta)
 class RuntimeBase(object):
-
-    @abc.abstractmethod
-    def pull_image(self):
-        pass
-
-    @abc.abstractmethod
-    def get_image(self):
-        pass
-
-    @abc.abstractmethod
-    def get_local_images(self):
-        pass
-
-
-class DockerRuntime(RuntimeBase):
 
     def __init__(self, params):
         self.params = params
@@ -75,15 +47,19 @@ class DockerRuntime(RuntimeBase):
         self.changed = False
         self.result = {}
 
-    def pull_image(self):
-        # NOTE(caoyingjun): Pull the image from aliyun or private repo.
-        # image's format is REPOSITORY:TAG
-        local_images = self.get_local_images()
-        if self.image not in local_images:
-            run_cmd('docker pull {image}'.format(image=self.image))
-            self.changed = True
+    def run_cmd(self, cmd):
+        proc = subprocess.Popen(cmd,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE,
+                                shell=True)
+        stdout, stderr = proc.communicate()
+        retcode = proc.poll()
+        if retcode != 0:
+            output = 'stdout: "%s", stderr: "%s"' % (stdout, stderr)
+            raise subprocess.CalledProcessError(retcode, cmd, output)
+        return stdout.rstrip()
 
-    def get_image(self):
+    def get_kube_images(self):
         # Get the images which kubernetes need for seting up cluster
         kube_cmd = ('kubeadm config images list '
                     '--image-repository {repository} '
@@ -91,7 +67,10 @@ class DockerRuntime(RuntimeBase):
                         repository=self.image_repository,
                         version=self.kubernetes_version))
 
-        kube_images = run_cmd(kube_cmd)
+        return self.run_cmd(kube_cmd)
+
+    def get_image(self):
+        kube_images = self.get_kube_images()
         images_list = []
         for image in kube_images.split():
             image_repo, image_tag = image.split(':')
@@ -106,8 +85,30 @@ class DockerRuntime(RuntimeBase):
                                     'group': 'kube-node'})
         self.result['images_list'] = images_list
 
+    @abc.abstractmethod
+    def pull_image(self):
+        pass
+
+    @abc.abstractmethod
     def get_local_images(self):
-        images = run_cmd('docker images')
+        pass
+
+
+class DockerRuntime(RuntimeBase):
+
+    def __init__(self, params):
+        super(DockerRuntime, self).__init__(params)
+
+    def pull_image(self):
+        # NOTE(caoyingjun): Pull the image from aliyun or private repo.
+        # image's format is REPOSITORY:TAG
+        local_images = self.get_local_images()
+        if self.image not in local_images:
+            self.run_cmd('docker pull {image}'.format(image=self.image))
+            self.changed = True
+
+    def get_local_images(self):
+        images = self.run_cmd('docker images')
         images = images.split('\n')[1:]
         return [':'.join(image.split()[:2])
                 for image in images]
@@ -115,14 +116,19 @@ class DockerRuntime(RuntimeBase):
 
 class ContainerdRuntime(RuntimeBase):
 
-    def pull_image(self):
-        pass
+    def __init__(self, params):
+        super(ContainerdRuntime, self).__init__(params)
 
-    def get_image(self):
-        pass
+    def pull_image(self):
+        local_images = self.get_local_images()
+        if self.image not in local_images:
+            self.run_cmd('ctr -n k8s.io images pull {image}'.format(image=self.image))
+            self.changed = True
 
     def get_local_images(self):
-        pass
+        images = self.run_cmd('ctr -n k8s.io images list')
+        images = images.split('\n')[1:]
+        return [image.split()[0] for image in images]
 
 
 def main():
