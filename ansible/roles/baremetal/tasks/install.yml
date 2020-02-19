@@ -32,7 +32,6 @@
       changed_when: false
   when:
     - inventory_hostname in groups['kubernetes']
-    - enable_kubernetes | bool
 
 - name: Copy docker daemon jsons
   template:
@@ -40,7 +39,6 @@
     dest: /etc/docker/daemon.json
   when:
     - inventory_hostname in groups['kubernetes']
-    - enable_kubernetes | bool
   notify:
     - Restart docker service
 
@@ -50,7 +48,6 @@
     service_type: systemd
   when:
     - inventory_hostname in groups['kubernetes']
-    - enable_kubernetes | bool
   notify:
     - Restart docker service
 
