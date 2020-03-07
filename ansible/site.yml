@@ -16,7 +16,7 @@
   gather_facts: false
   hosts:
     - kube-master
-    - kube-worker
+    - kube-node
     - kubernetes
   serial: '{{ kube_serial|default("0") }}'
   roles:

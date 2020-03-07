@@ -42,7 +42,8 @@
     module_name: kubeadm
     module_args: init
     module_extra_vars:
-      kubernetes-version: "{{ kube_version }}"
+      image-repository: "{{ image_repository }}"
+      kubernetes-version: "{{ kubernetes_version }}"
       pod-network-cidr: "{{ cluster_cidr }}"
       service-cidr: "{{ service_cidr }}"
     is_ha: "{{ enable_kubernetes_ha | bool }}"
@@ -55,7 +56,7 @@
 - name: Get kubernetes cluster token and certs
   kube_toolbox:
     kube_masters: "{{ groups['kube-master'] }}"
-    kube_workers: "{{ groups['kube-worker'] }}"
+    kube_workers: "{{ groups['kube-node'] }}"
     kube_action: "get"
     is_ha: "{{ enable_kubernetes_ha | bool }}"
   register: cluster_result
@@ -96,7 +97,7 @@
   run_once: True
   changed_when: false
   when:
-    - item in groups['kube-worker']
+    - item in groups['kube-node']
     - inventory_hostname != "localhost"
   loop: "{{ groups['kube-master'] }}"
 

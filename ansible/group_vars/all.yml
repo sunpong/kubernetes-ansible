@@ -4,6 +4,7 @@ api_interface: "{{ network_interface }}"
 api_interface_address: "{{ hostvars[inventory_hostname]['ansible_' + api_interface]['ipv4']['address'] }}"
 
 aliyun_repo: "registry.cn-hangzhou.aliyuncs.com/google_containers"
+image_repository: "{{ aliyun_repo }}"
 
 enable_registry: "no"
 registry_server: 127.0.0.1:4000
@@ -39,7 +40,7 @@ enable_ingress_nginx: "yes"
 enable_helm: "no"
 
 kube_release: 1.16.2
-kube_version: "v{{ kube_release }}"
+kubernetes_version: "v{{ kube_release }}"
 
 docker_release: 18.06.2
 
@@ -81,8 +82,8 @@ kube_applications:
 #####################
 
 metrics_server_images:
-  - k8s.gcr.io/metrics-server-amd64:v0.3.6
-  - k8s.gcr.io/addon-resizer:1.8.6
+  - "{{ image_repository }}/metrics-server-amd64:v0.3.6"
+  - "{{ image_repository }}/addon-resizer:1.8.6"
 
 loadbalancer_url: "{{ registry_server + '/' if enable_registry | bool else '' }}"
 loadbalancer_image: "{{ loadbalancer_url }}jacky06/kube-nginx:v1.1"
