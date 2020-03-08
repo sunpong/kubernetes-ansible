@@ -100,6 +100,7 @@
   with_dict: "{{ update_nodes }}"
   when:
     - item.key in ['docker-node', 'containerd-node']
+    - inventory_hostname not in groups['kube-master']
     - inventory_hostname in item.value
 
 - name: Taint master node when it is the worker node too
