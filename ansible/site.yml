@@ -12,6 +12,16 @@
         tags: nfs,
         when: enable_nfs | bool}
 
+- name: Apply role haproxy
+  gather_facts: false
+  hosts:
+    - kube-master
+  serial: '{{ kube_serial|default("0") }}'
+  roles:
+    - { role: haproxy,
+        tags: haproxy,
+        when: enable_haproxy | bool }
+
 - name: Apply role kubernetes
   gather_facts: false
   hosts:

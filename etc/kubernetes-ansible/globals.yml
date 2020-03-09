@@ -13,6 +13,17 @@ service_cidr: "10.254.0.0/16"
 #is eth0.
 #network_interface: "eth0"
 
+# This should be a VIP, an unused IP on your network that will float between
+# the hosts running keepalived for high-availability.
+#kube_vip_address: "172.16.50.250"
+#kube_vip_port: 8443
+
+#####################
+# keepalived options
+#####################
+# Arbitrary unique number from 0..255
+#keepalived_virtual_router_id: "68"
+
 
 ###################
 # Registry options

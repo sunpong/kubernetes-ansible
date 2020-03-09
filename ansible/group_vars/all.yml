@@ -11,10 +11,23 @@ registry_server: 127.0.0.1:4000
 registry_namespace: "kubernetes"
 registry_repo: "{{ registry_server }}/{{ registry_namespace }}"
 
+
+#####################
+# keepalived options
+#####################
+# Arbitrary unique number from 0..255
+keepalived_virtual_router_id: "68"
+
+
 #####################
 # Kubernetes Options
 #####################
 kube_application_dir: "/tmp/kubernetes"
+
+# This should be a VIP, an unused IP on your network that will float between
+# the hosts running keepalived for high-availability.
+kube_vip_address: 172.16.50.250
+kube_vip_port: 8443
 
 cluster_cidr: "172.30.0.0/16"
 service_cidr: "10.254.0.0/16"
@@ -29,6 +42,7 @@ enable_ovn: "no"
 
 enable_kubernetes: "yes"
 enable_kubernetes_ha: "no"
+enable_haproxy: "{{ enable_kubernetes_ha }}"
 enable_metrics_server: "yes"
 enable_nfs_provisioner: "yes"
 enable_rbd_provisioner: "no"
