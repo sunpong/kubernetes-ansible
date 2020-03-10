@@ -49,6 +49,7 @@
       pod-network-cidr: "{{ cluster_cidr }}"
       service-cidr: "{{ service_cidr }}"
     is_ha: "{{ enable_kubernetes_ha | bool }}"
+    kube_api: "{{ kube_vip_address }}:{{ kube_vip_port }}"
   delegate_to: "{{ groups['kube-master'][0] }}"
   run_once: True
 
