@@ -11,11 +11,6 @@
       - {'name': ip_vs_rr}
   when: inventory_hostname in groups['kubernetes']
 
-- name: Apply loadbalancer role
-  import_role:
-    role: loadbalancer
-  when: enable_kubernetes_ha | bool
-
 - name: Setting sysctl values
   become: true
   sysctl: name={{ item.name }} value={{ item.value }} sysctl_set=yes
