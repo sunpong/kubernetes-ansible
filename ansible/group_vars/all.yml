@@ -44,7 +44,7 @@ enable_kubernetes: "yes"
 enable_kubernetes_ha: "no"
 enable_haproxy: "{{ enable_kubernetes_ha }}"
 enable_metrics_server: "yes"
-enable_nfs_provisioner: "yes"
+enable_nfs_provisioner: "{{ enable_nfs }}"
 enable_rbd_provisioner: "no"
 enable_dashboard: "yes"
 enable_prometheus: "no"
@@ -155,7 +155,7 @@ helm_image: "{{ helm_url }}jacky06/helm-toolbox:{{ helm_release }}"
 ########################
 # Storage Class Options
 ########################
-enable_nfs: "yes"
+enable_nfs: "no"
 
 nfs_volume: /data/share
 nfs_cidr: "*"
