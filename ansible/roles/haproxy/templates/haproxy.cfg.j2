@@ -24,3 +24,39 @@ listen kubernetes_internal
 {% for host in groups['kube-master'] %}
     server {{ host }} {{ hostvars[host]['ansible_' + api_interface]['ipv4']['address'] }}:6443 check inter 2000 rise 2 fall 5
 {% endfor %}
+
+listen kubernetes_dashboard
+    bind {{ kube_vip_address }}:9443
+    mode tcp
+    option tcplog
+    option dontlognull
+    option dontlog-normal
+    balance roundrobin
+
+{% for host in groups['kube-master'] %}
+    server {{ host }} {{ hostvars[host]['ansible_' + api_interface]['ipv4']['address'] }}:{{ dashboard_node_port }} check inter 2000 rise 2 fall 5
+{% endfor %}
+
+listen kubernetes_ingress
+    bind {{ kube_vip_address }}:80
+    mode tcp
+    option tcplog
+    option dontlognull
+    option dontlog-normal
+    balance roundrobin
+
+{% for host in groups['kube-master'] %}
+    server {{ host }} {{ hostvars[host]['ansible_' + api_interface]['ipv4']['address'] }}:{{ ingress_node_port }} check inter 2000 rise 2 fall 5
+{% endfor %}
+
+listen kubernetes_ingress_ssl
+    bind {{ kube_vip_address }}:443
+    mode tcp
+    option tcplog
+    option dontlognull
+    option dontlog-normal
+    balance roundrobin
+
+{% for host in groups['kube-master'] %}
+    server {{ host }} {{ hostvars[host]['ansible_' + api_interface]['ipv4']['address'] }}:{{ ingress_tls_node_port }} check inter 2000 rise 2 fall 5
+{% endfor %}
