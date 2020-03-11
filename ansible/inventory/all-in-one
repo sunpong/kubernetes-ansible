@@ -1,10 +1,10 @@
 [docker-master]
 localhost       ansible_connection=local
 
-[containerd-master]
-
 [docker-node]
 localhost       ansible_connection=local
+
+[containerd-master]
 
 [containerd-node]
 
@@ -30,3 +30,6 @@ kube-node
 
 [nfs-server:children]
 storage
+
+[haproxy:children]
+kube-master

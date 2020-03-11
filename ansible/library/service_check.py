@@ -41,7 +41,7 @@ class ServiceCheck(object):
         if retcode not in [0, 3]:
             output = 'stdout: "%s", stderr: "%s"' % (stdout, stderr)
             raise subprocess.CalledProcessError(retcode, cmd, output)
-        return stdout, stderr, retcode
+        return stdout, retcode
 
     def run(self):
         if self.service_type == 'systemd':
@@ -52,7 +52,7 @@ class ServiceCheck(object):
             filter_item = '='.join(['name', self.service_name])
             cmd.append(filter_item)
 
-        stdout, stderr, retcode = self._run(cmd)
+        stdout, retcode = self._run(cmd)
         # When service status is not active, that's means the service
         # should be started, set changed to True to notify started action.
         if self.service_type == 'systemd':
