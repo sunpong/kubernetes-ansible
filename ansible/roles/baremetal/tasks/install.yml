@@ -32,24 +32,27 @@
     name: "{{ item.runtime }}"
     state: present
   when:
-    - inventory_hostname in groups[item.groups]
+    - inventory_hostname in groups[item.nodegroups] or
+      inventory_hostname in groups[item.mastergroups]
   loop:
-    - {'runtime': "docker-ce-{{ docker_release }}.ce", 'groups': "docker-node"}
-    - {'runtime': "containerd.io-{{ containerd_release }}", 'groups': "containerd-node"}
+    - {'runtime': "docker-ce-{{ docker_release }}.ce", 'nodegroups': "docker-node", 'mastergroups': "docker-master"}
+    - {'runtime': "containerd.io-{{ containerd_release }}", 'nodegroups': "containerd-node", 'mastergroups': "containerd-master"}
 
 - name: Ensure /etc/docker directories exists
   file:
     name: /etc/docker
     state: directory
   when:
-    - inventory_hostname in groups['docker-node']
+    - inventory_hostname in groups['docker-master'] or
+      inventory_hostname in groups['docker-node']
 
 - name: Copy docker daemon jsons
   template:
     src: kube-daemon.json.j2
     dest: /etc/docker/daemon.json
   when:
-    - inventory_hostname in groups['docker-node']
+    - inventory_hostname in groups['docker-master'] or
+      inventory_hostname in groups['docker-node']
   notify:
     - Restart docker service
 
@@ -58,7 +61,8 @@
     src: config.toml.j2
     dest: /etc/containerd/config.toml
   when:
-    - inventory_hostname in groups['containerd-node']
+    - inventory_hostname in groups['containerd-master'] or
+      inventory_hostname in groups['containerd-node']
   notify:
     - Restart containerd service
 
@@ -67,7 +71,8 @@
     service_name: docker
     service_type: systemd
   when:
-    - inventory_hostname in groups['docker-node']
+    - inventory_hostname in groups['docker-master'] or
+      inventory_hostname in groups['docker-node']
   notify:
     - Restart docker service
 
@@ -76,7 +81,8 @@
     service_name: containerd
     service_type: systemd
   when:
-    - inventory_hostname in groups['containerd-node']
+    - inventory_hostname in groups['containerd-master'] or
+      inventory_hostname in groups['containerd-node']
   notify:
     - Restart containerd service
 
