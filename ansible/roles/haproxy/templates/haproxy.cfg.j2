@@ -49,7 +49,7 @@ listen kubernetes_ingress
     server {{ host }} {{ hostvars[host]['ansible_' + api_interface]['ipv4']['address'] }}:{{ ingress_node_port }} check inter 2000 rise 2 fall 5
 {% endfor %}
 
-listen kubernetes_ingress_ssl
+listen kubernetes_ingress_tls
     bind {{ kube_vip_address }}:443
     mode tcp
     option tcplog

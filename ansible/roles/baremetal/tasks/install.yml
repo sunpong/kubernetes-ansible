@@ -1,4 +1,25 @@
 ---
+- name: Install nfs utils packages
+  yum:
+    name: "{{ item.name }}"
+    state: present
+  loop:
+    - {name: rpcbind, group: storage}
+    - {name: nfs-utils, group: kubernetes}
+  when:
+    - inventory_hostname in groups[item.group]
+    - enable_nfs | bool
+
+- name: Install haproxy and keepalived
+  yum:
+    name:
+      - haproxy
+      - keepalived
+    state: present
+  when:
+    - inventory_hostname in groups['haproxy']
+    - enable_haproxy | bool
+
 - name: Hanlder the kubernetes stuffs
   block:
     - name: Copy container runtime repos for kubernetes nodes
@@ -88,24 +109,3 @@
 
 - name: Flush handlers
   meta: flush_handlers
-
-- name: Install nfs utils packages
-  yum:
-    name: "{{ item.name }}"
-    state: present
-  loop:
-    - {name: rpcbind, group: storage}
-    - {name: nfs-utils, group: kubernetes}
-  when:
-    - inventory_hostname in groups[item.group]
-    - enable_nfs | bool
-
-- name: Install haproxy and keepalived
-  yum:
-    name:
-      - haproxy
-      - keepalived
-    state: present
-  when:
-    - inventory_hostname in groups['kube-master']
-    - enable_haproxy | bool

@@ -1,10 +1,10 @@
 [docker-master]
 kube01
 
-[containerd-master]
-
 [docker-node]
 kube02
+
+[containerd-master]
 
 [containerd-node]
 
@@ -29,3 +29,6 @@ kube-node
 
 [nfs-server:children]
 storage
+
+[haproxy:children]
+kube-master
