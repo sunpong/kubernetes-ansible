@@ -27,8 +27,9 @@ kube_application_dir: "/tmp/kubernetes"
 # This should be a VIP, an unused IP on your network that will float between
 # the hosts running keepalived for high-availability.
 kube_vip_address: 172.16.50.250
-kube_vip_port: 8443
+dashboard_vip_address: ""
 
+kube_vip_port: 8443
 dashboard_node_port: 30001
 ingress_node_port: 30006
 ingress_tls_node_port: 30008
