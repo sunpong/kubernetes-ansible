@@ -25,8 +25,13 @@ listen kubernetes_internal
     server {{ host }} {{ hostvars[host]['ansible_' + api_interface]['ipv4']['address'] }}:6443 check inter 2000 rise 2 fall 5
 {% endfor %}
 
+{% if enable_dashboard | bool %}
 listen kubernetes_dashboard
-    bind {{ kube_vip_address }}:9443
+{% if dashboard_vip_address != "" %}
+    bind {{ dashboard_vip_address }}:443
+{% else %}
+    bind {{ kube_vip_address }}:1443
+{% endif %}
     mode tcp
     option tcplog
     option dontlognull
@@ -36,6 +41,7 @@ listen kubernetes_dashboard
 {% for host in groups['kube-master'] %}
     server {{ host }} {{ hostvars[host]['ansible_' + api_interface]['ipv4']['address'] }}:{{ dashboard_node_port }} check inter 2000 rise 2 fall 5
 {% endfor %}
+{% endif %}
 
 listen kubernetes_ingress
     bind {{ kube_vip_address }}:80
