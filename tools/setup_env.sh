@@ -11,10 +11,9 @@ trusted-host =  mirrors.aliyun.com
 index-url = http://mirrors.aliyun.com/pypi/simple/
 EOF
 
-if [[ ! -d "kubernetes-ansible" ]]; then
-    git clone https://github.com/yingjuncao/kubernetes-ansible
-    cp -r kubernetes-ansible/etc/kubernetes-ansible/ /etc/
-    cp kubernetes-ansible/ansible/inventory/multinode .
+if [[ ! -d /tmp/kubernetes-ansible ]]; then
+    git clone https://github.com/yingjuncao/kubernetes-ansible /tmp/kubernetes-ansible
+    cp -r /tmp/kubernetes-ansible/etc/kubernetes-ansible/ /etc/
+    cp /tmp/kubernetes-ansible/ansible/inventory/multinode .
 fi
-pip install ansible==2.5.0
-pip install kubernetes-ansible/
+pip install ansible==2.5.0 /tmp/kubernetes-ansible/
