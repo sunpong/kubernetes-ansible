@@ -134,9 +134,13 @@ class KubeWorker(object):
 
     @add_kubeconfig_in_environ
     def get_token(self):
-        cmd = 'kubeadm token list | grep system:bootstrappers'
+        cmd = 'kubeadm token list'
         tokens = self._run(cmd)
-        tokens = tokens.split('\n')
+
+        if 'system:bootstrappers' not in tokens:
+            tokens = []
+        else:
+            tokens = tokens.split('\n')[1:]
 
         for tk in tokens:
             if not tk:
