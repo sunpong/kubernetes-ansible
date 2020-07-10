@@ -7,9 +7,9 @@
     ``` bash
     a. 打通部署节点到其他节点的免密登陆
 
-    b. 配置部署节点的 `/etc/hosts` , 添加kubernetes节点的ip和主机名解析
+    b. 配置部署节点的 /etc/hosts , 添加kubernetes节点的ip和主机名解析
 
-    c. `multinode` 配置格式，推荐：
+    c. multinode 配置格式，推荐：
         [control]
         kube0[1:3]
 

@@ -54,7 +54,6 @@ enable_rbd_provisioner: "no"
 enable_dashboard: "yes"
 enable_prometheus: "no"
 enable_efk: "no"
-enable_jenkins: "no"
 enable_ingress_nginx: "yes"
 enable_helm: "no"
 
@@ -89,8 +88,6 @@ kube_applications:
     enabled: "{{ enable_grafana | bool }}"
   - name: prometheus
     enabled: "{{ enable_prometheus | bool }}"
-  - name: jenkins
-    enabled: "{{ enable_jenkins | bool }}"
   - name: efk
     enabled: "{{ enable_efk | bool }}"
   - name: ingress-nginx

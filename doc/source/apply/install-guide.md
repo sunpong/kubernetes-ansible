@@ -16,7 +16,6 @@
     - dashboard
     - prometheus
     - efk
-    - jenkins
     - ingress\_nginx
     - helm [helm3](helm3-guide.md)
 
