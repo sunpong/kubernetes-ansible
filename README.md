@@ -21,12 +21,7 @@ Kubernetes-ansible's mission statement is:
     - `Nginx ingress`
     - `Flannel`
     - `Calico`
-    - `Grafana`
-    - `Prometheus`
-    - `Jenkins`
 
 6. 清理集群 [Destory-guide](doc/source/install/destroy.md)
-
-7. Contact me `caoyingjun(284224086@qq.com)`
 
 Copyright 2019 caoyingjun (284224086@qq.com) Apache License 2.0

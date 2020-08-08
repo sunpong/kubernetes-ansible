@@ -1,6 +1,6 @@
 # 测试环境部署 -- All-in-one
 
-1. (可选) All-in-one环境的快速安装 - 配置全部默认
+1. (可选) All-in-one 环境的快速安装 - 配置全部默认
 
     ``` bash
     curl https://raw.githubusercontent.com/yingjuncao/kubernetes-ansible/master/tools/all_in_one.sh | bash
