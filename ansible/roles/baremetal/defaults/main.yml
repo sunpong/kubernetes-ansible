@@ -2,7 +2,9 @@
 ####################
 # Common dependence
 ####################
-common_dependent_packages: []
+common_dependent_packages:
+  - ipvsadm
+  - ipset
 
 change_selinux: True
 selinux_state: "disabled"
